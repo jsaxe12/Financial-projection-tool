@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body { margin: 0; padding: 0; }
+
+input[type=range] { height: 4px; border-radius: 2px; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #0a0c10; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+
+/* Tab styles */
+.tab-active { color: #fbbf24; border-bottom: 2px solid #fbbf24; }
+.tab-inactive { color: #475569; border-bottom: 2px solid transparent; }
+
+/* Utility classes */
+.flex { display: flex; }
+.justify-between { justify-content: space-between; }
+.gap-4 { gap: 1rem; }
+.w-full { width: 100%; }
+.cursor-pointer { cursor: pointer; }
+
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mt-half { margin-top: 0.125rem; }
+
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-2xl { font-size: 1.5rem; line-height: 2rem; }
+
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+.font-black { font-weight: 900; }
+
+.uppercase { text-transform: uppercase; }
+.tracking-widest { letter-spacing: 0.1em; }
+
+.rounded-xl { border-radius: 0.75rem; }
+
+/* Color utilities */
+.text-white { color: #ffffff; }
+.text-slate-400 { color: #94a3b8; }
+.text-slate-500 { color: #64748b; }
+.text-slate-600 { color: #475569; }
+.text-amber-400 { color: #fbbf24; }
+
+.accent-amber-400 { accent-color: #fbbf24; }
+
+/* Metric card */
+.metric-card { padding: 1rem; border: 1px solid; }
+.metric-highlight { border-color: rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.05); }
+.metric-default { border-color: rgba(51, 65, 85, 0.5); background: rgba(30, 41, 59, 0.4); }
+.metric-value { font-size: 1.5rem; font-weight: 900; }
+
+/* Custom tooltip */
+.custom-tooltip {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
