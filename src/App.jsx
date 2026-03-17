@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
 
 const fmt = (n) => {
@@ -57,6 +57,16 @@ function buildProjection(params) {
 
 const TABS = ["Revenue", "Customers", "Profitability", "Assumptions"];
 
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 const SliderInput = ({ label, value, min, max, step, onChange, format }) => (
   <div className="mb-4">
     <div className="flex justify-between mb-1">
@@ -102,6 +112,8 @@ export default function App() {
   const [scenario, setScenario] = useState("base");
   const [params, setParams] = useState(SCENARIO_PRESETS.base);
   const [activeTab, setActiveTab] = useState("Revenue");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const setParam = useCallback((key, val) => {
     setScenario("custom");
@@ -121,14 +133,22 @@ export default function App() {
   return (
     <div style={{ fontFamily: "'DM Mono', 'Courier New', monospace", background: "#0a0c10", minHeight: "100vh", color: "#e2e8f0" }}>
       {/* Header */}
-      <div style={{ borderBottom: "1px solid #1e293b", padding: "24px 32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{
+        borderBottom: "1px solid #1e293b",
+        padding: isMobile ? "16px" : "24px 32px",
+        display: "flex",
+        flexDirection: isMobile ? "column" : "row",
+        justifyContent: "space-between",
+        alignItems: isMobile ? "flex-start" : "center",
+        gap: isMobile ? 12 : 0,
+      }}>
         <div>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: isMobile ? 18 : 22, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>
             ✈ TAILNUMBER <span style={{ color: "#fbbf24" }}>SAAS</span>
           </div>
           <div style={{ fontSize: 11, color: "#475569", letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 2 }}>10-Year Financial Projection Model</div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {["conservative", "base", "optimistic"].map(s => (
             <button key={s} onClick={() => applyScenario(s)}
               style={{ padding: "6px 14px", borderRadius: 6, fontSize: 11, fontFamily: "inherit", textTransform: "uppercase", letterSpacing: "0.1em", cursor: "pointer", border: "1px solid", transition: "all 0.15s",
@@ -146,25 +166,56 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", minHeight: "calc(100vh - 73px)" }}>
+      {/* Mobile sidebar toggle */}
+      {isMobile && (
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          style={{
+            width: "100%", padding: "10px 16px", background: "#111827", border: "none", borderBottom: "1px solid #1e293b",
+            color: "#94a3b8", fontSize: 12, fontFamily: "inherit", letterSpacing: "0.1em", textTransform: "uppercase",
+            cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center",
+          }}>
+          <span>{sidebarOpen ? "Hide" : "Show"} Assumptions</span>
+          <span style={{ fontSize: 16 }}>{sidebarOpen ? "▲" : "▼"}</span>
+        </button>
+      )}
+
+      <div style={{
+        display: isMobile ? "flex" : "grid",
+        flexDirection: isMobile ? "column" : undefined,
+        gridTemplateColumns: isMobile ? undefined : "280px 1fr",
+        minHeight: "calc(100vh - 73px)",
+      }}>
         {/* Sidebar */}
-        <div style={{ borderRight: "1px solid #1e293b", padding: "24px 20px", overflowY: "auto" }}>
+        <div style={{
+          borderRight: isMobile ? "none" : "1px solid #1e293b",
+          borderBottom: isMobile ? "1px solid #1e293b" : "none",
+          padding: isMobile ? "16px" : "24px 20px",
+          overflowY: "auto",
+          display: isMobile && !sidebarOpen ? "none" : "block",
+        }}>
           <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#475569", marginBottom: 20 }}>Adjust Assumptions</div>
 
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 10, color: "#fbbf24", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12, paddingBottom: 6, borderBottom: "1px solid #1e293b" }}>Growth</div>
-            <SliderInput label="New Customers Year 1" value={params.newCustomersY1} min={10} max={200} step={5} onChange={v => setParam("newCustomersY1", v)} />
-            <SliderInput label="Annual New Customer Growth" value={params.growthRate} min={20} max={150} step={5} onChange={v => setParam("growthRate", v)} format={v => `${v}%`} />
-            <SliderInput label="Annual Churn Rate" value={params.churnRate} min={2} max={20} step={0.5} onChange={v => setParam("churnRate", v)} format={v => `${v}%`} />
-            <SliderInput label="Avg Monthly Revenue / Customer" value={params.avgMRR} min={99} max={500} step={10} onChange={v => setParam("avgMRR", v)} format={v => `$${v}`} />
-          </div>
+          <div style={{
+            display: isMobile ? "grid" : "block",
+            gridTemplateColumns: isMobile ? "1fr 1fr" : undefined,
+            gap: isMobile ? 16 : undefined,
+          }}>
+            <div style={{ marginBottom: isMobile ? 0 : 24 }}>
+              <div style={{ fontSize: 10, color: "#fbbf24", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12, paddingBottom: 6, borderBottom: "1px solid #1e293b" }}>Growth</div>
+              <SliderInput label="New Customers Year 1" value={params.newCustomersY1} min={10} max={200} step={5} onChange={v => setParam("newCustomersY1", v)} />
+              <SliderInput label="Annual New Customer Growth" value={params.growthRate} min={20} max={150} step={5} onChange={v => setParam("growthRate", v)} format={v => `${v}%`} />
+              <SliderInput label="Annual Churn Rate" value={params.churnRate} min={2} max={20} step={0.5} onChange={v => setParam("churnRate", v)} format={v => `${v}%`} />
+              <SliderInput label="Avg Monthly Revenue / Customer" value={params.avgMRR} min={99} max={500} step={10} onChange={v => setParam("avgMRR", v)} format={v => `$${v}`} />
+            </div>
 
-          <div>
-            <div style={{ fontSize: 10, color: "#fbbf24", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12, paddingBottom: 6, borderBottom: "1px solid #1e293b" }}>Cost Structure</div>
-            <SliderInput label="COGS % of Revenue" value={params.cogsPercent} min={5} max={35} step={1} onChange={v => setParam("cogsPercent", v)} format={v => `${v}%`} />
-            <SliderInput label="Sales & Marketing %" value={params.smPercent} min={10} max={50} step={1} onChange={v => setParam("smPercent", v)} format={v => `${v}%`} />
-            <SliderInput label="R&D %" value={params.rdPercent} min={5} max={30} step={1} onChange={v => setParam("rdPercent", v)} format={v => `${v}%`} />
-            <SliderInput label="G&A %" value={params.gaPercent} min={3} max={20} step={1} onChange={v => setParam("gaPercent", v)} format={v => `${v}%`} />
+            <div>
+              <div style={{ fontSize: 10, color: "#fbbf24", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12, paddingBottom: 6, borderBottom: "1px solid #1e293b" }}>Cost Structure</div>
+              <SliderInput label="COGS % of Revenue" value={params.cogsPercent} min={5} max={35} step={1} onChange={v => setParam("cogsPercent", v)} format={v => `${v}%`} />
+              <SliderInput label="Sales & Marketing %" value={params.smPercent} min={10} max={50} step={1} onChange={v => setParam("smPercent", v)} format={v => `${v}%`} />
+              <SliderInput label="R&D %" value={params.rdPercent} min={5} max={30} step={1} onChange={v => setParam("rdPercent", v)} format={v => `${v}%`} />
+              <SliderInput label="G&A %" value={params.gaPercent} min={3} max={20} step={1} onChange={v => setParam("gaPercent", v)} format={v => `${v}%`} />
+            </div>
           </div>
 
           {/* LTV / CAC box */}
@@ -185,9 +236,9 @@ export default function App() {
         </div>
 
         {/* Main */}
-        <div style={{ padding: "24px 28px", overflowY: "auto" }}>
+        <div style={{ padding: isMobile ? "16px" : "24px 28px", overflowY: "auto" }}>
           {/* KPI Row */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
             <MetricCard label="Year 10 ARR" value={fmt(y10.arr)} sub={`${fmtNum(y10.customers)} customers`} highlight />
             <MetricCard label="Year 5 ARR" value={fmt(y5.arr)} sub={`${fmtNum(y5.customers)} customers`} />
             <MetricCard label="Y10 EBITDA Margin" value={`${y10.ebitdaMargin.toFixed(0)}%`} sub={fmt(y10.ebitda)} highlight={y10.ebitdaMargin > 0} />
@@ -195,11 +246,11 @@ export default function App() {
           </div>
 
           {/* Tabs */}
-          <div style={{ display: "flex", gap: 24, borderBottom: "1px solid #1e293b", marginBottom: 24 }}>
+          <div style={{ display: "flex", gap: isMobile ? 12 : 24, borderBottom: "1px solid #1e293b", marginBottom: 24, overflowX: "auto" }}>
             {TABS.map(t => (
               <button key={t} onClick={() => setActiveTab(t)}
                 className={activeTab === t ? "tab-active" : "tab-inactive"}
-                style={{ background: "none", border: "none", padding: "8px 0", fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit", transition: "color 0.15s" }}>
+                style={{ background: "none", border: "none", padding: "8px 0", fontSize: isMobile ? 11 : 12, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit", transition: "color 0.15s", whiteSpace: "nowrap", flexShrink: 0 }}>
                 {t}
               </button>
             ))}
@@ -209,7 +260,7 @@ export default function App() {
           {activeTab === "Revenue" && (
             <div>
               <div style={{ marginBottom: 8, fontSize: 11, color: "#475569", letterSpacing: "0.1em", textTransform: "uppercase" }}>Annual Recurring Revenue (ARR) — 10 Year Trajectory</div>
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={isMobile ? 220 : 280}>
                 <AreaChart data={data}>
                   <defs>
                     <linearGradient id="arrGrad" x1="0" y1="0" x2="0" y2="1">
@@ -219,7 +270,7 @@ export default function App() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                   <XAxis dataKey="year" stroke="#334155" tick={{ fontSize: 11, fill: "#64748b" }} />
-                  <YAxis tickFormatter={fmt} stroke="#334155" tick={{ fontSize: 11, fill: "#64748b" }} width={70} />
+                  <YAxis tickFormatter={fmt} stroke="#334155" tick={{ fontSize: 11, fill: "#64748b" }} width={isMobile ? 50 : 70} />
                   <Tooltip content={<CustomTooltip />} />
                   <Area type="monotone" dataKey="arr" name="ARR" stroke="#fbbf24" strokeWidth={2} fill="url(#arrGrad)" />
                   <Area type="monotone" dataKey="grossProfit" name="Gross Profit" stroke="#34d399" strokeWidth={2} fill="none" strokeDasharray="4 2" />
@@ -227,25 +278,25 @@ export default function App() {
               </ResponsiveContainer>
 
               {/* Table */}
-              <div style={{ marginTop: 20, overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <div style={{ marginTop: 20, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: isMobile ? 11 : 12, minWidth: isMobile ? 600 : "auto" }}>
                   <thead>
                     <tr style={{ borderBottom: "1px solid #1e293b" }}>
                       {["Year", "Customers", "ARR", "Gross Profit", "Gross Margin", "EBITDA", "EBITDA Margin"].map(h => (
-                        <th key={h} style={{ padding: "8px 12px", textAlign: h === "Year" || h === "Customers" ? "left" : "right", fontSize: 10, color: "#475569", letterSpacing: "0.1em", textTransform: "uppercase" }}>{h}</th>
+                        <th key={h} style={{ padding: isMobile ? "6px 8px" : "8px 12px", textAlign: h === "Year" || h === "Customers" ? "left" : "right", fontSize: 10, color: "#475569", letterSpacing: "0.1em", textTransform: "uppercase" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {data.map((d, i) => (
                       <tr key={d.year} style={{ borderBottom: "1px solid #0f172a", background: i % 2 === 0 ? "transparent" : "#0d1117" }}>
-                        <td style={{ padding: "8px 12px", color: "#fbbf24", fontWeight: 700 }}>{d.year}</td>
-                        <td style={{ padding: "8px 12px", color: "#e2e8f0" }}>{fmtNum(d.customers)}</td>
-                        <td style={{ padding: "8px 12px", textAlign: "right", color: "#e2e8f0" }}>{fmt(d.arr)}</td>
-                        <td style={{ padding: "8px 12px", textAlign: "right", color: "#34d399" }}>{fmt(d.grossProfit)}</td>
-                        <td style={{ padding: "8px 12px", textAlign: "right", color: "#34d399" }}>{d.grossMargin.toFixed(0)}%</td>
-                        <td style={{ padding: "8px 12px", textAlign: "right", color: d.ebitda >= 0 ? "#34d399" : "#f87171" }}>{fmt(d.ebitda)}</td>
-                        <td style={{ padding: "8px 12px", textAlign: "right", color: d.ebitdaMargin >= 0 ? "#34d399" : "#f87171" }}>{d.ebitdaMargin.toFixed(0)}%</td>
+                        <td style={{ padding: isMobile ? "6px 8px" : "8px 12px", color: "#fbbf24", fontWeight: 700 }}>{d.year}</td>
+                        <td style={{ padding: isMobile ? "6px 8px" : "8px 12px", color: "#e2e8f0" }}>{fmtNum(d.customers)}</td>
+                        <td style={{ padding: isMobile ? "6px 8px" : "8px 12px", textAlign: "right", color: "#e2e8f0" }}>{fmt(d.arr)}</td>
+                        <td style={{ padding: isMobile ? "6px 8px" : "8px 12px", textAlign: "right", color: "#34d399" }}>{fmt(d.grossProfit)}</td>
+                        <td style={{ padding: isMobile ? "6px 8px" : "8px 12px", textAlign: "right", color: "#34d399" }}>{d.grossMargin.toFixed(0)}%</td>
+                        <td style={{ padding: isMobile ? "6px 8px" : "8px 12px", textAlign: "right", color: d.ebitda >= 0 ? "#34d399" : "#f87171" }}>{fmt(d.ebitda)}</td>
+                        <td style={{ padding: isMobile ? "6px 8px" : "8px 12px", textAlign: "right", color: d.ebitdaMargin >= 0 ? "#34d399" : "#f87171" }}>{d.ebitdaMargin.toFixed(0)}%</td>
                       </tr>
                     ))}
                   </tbody>
@@ -258,7 +309,7 @@ export default function App() {
           {activeTab === "Customers" && (
             <div>
               <div style={{ marginBottom: 8, fontSize: 11, color: "#475569", letterSpacing: "0.1em", textTransform: "uppercase" }}>Customer Growth — New vs Churned</div>
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={isMobile ? 220 : 280}>
                 <BarChart data={data}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                   <XAxis dataKey="year" stroke="#334155" tick={{ fontSize: 11, fill: "#64748b" }} />
@@ -270,7 +321,7 @@ export default function App() {
                   <Line type="monotone" dataKey="customers" name="Total Customers" stroke="#34d399" strokeWidth={2} dot={false} />
                 </BarChart>
               </ResponsiveContainer>
-              <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+              <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 12 }}>
                 {[
                   { label: "Total Customers Y5", value: fmtNum(y5.customers), sub: `${fmtNum(y5.newCustomers)} acquired that year` },
                   { label: "Total Customers Y10", value: fmtNum(y10.customers), sub: `${fmtNum(y10.churned)} churn that year` },
@@ -284,7 +335,7 @@ export default function App() {
           {activeTab === "Profitability" && (
             <div>
               <div style={{ marginBottom: 8, fontSize: 11, color: "#475569", letterSpacing: "0.1em", textTransform: "uppercase" }}>EBITDA Margin Progression</div>
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={isMobile ? 220 : 280}>
                 <AreaChart data={data}>
                   <defs>
                     <linearGradient id="profGrad" x1="0" y1="0" x2="0" y2="1">
@@ -299,7 +350,7 @@ export default function App() {
                   <Area type="monotone" dataKey="ebitdaMargin" name="EBITDA Margin" stroke="#34d399" strokeWidth={2} fill="url(#profGrad)" />
                 </AreaChart>
               </ResponsiveContainer>
-              <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+              <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 12 }}>
                 {[
                   { label: "Gross Margin Y10", value: `${y10.grossMargin.toFixed(0)}%`, sub: `${fmt(y10.grossProfit)} gross profit` },
                   { label: "S&M Spend Y10", value: fmt(y10.sm), sub: `${params.smPercent}% of ARR` },
@@ -312,7 +363,7 @@ export default function App() {
 
           {/* Tab: Assumptions */}
           {activeTab === "Assumptions" && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 12 : 20 }}>
               {[
                 { title: "Pricing Logic", items: ["Solo plan: $99/mo (1 aircraft)", "Ramp plan: $249/mo (2–5 aircraft)", "Fleet plan: $499/mo (6–15 aircraft)", `Blended avg used in model: $${params.avgMRR}/mo`] },
                 { title: "Churn Assumptions", items: ["Aviation compliance = high switching cost", "Industry benchmark: 5–8% annual B2B SaaS", `Model uses: ${params.churnRate}% annual churn`, "Lower churn once logbook data is locked in"] },
@@ -321,7 +372,7 @@ export default function App() {
                 { title: "What This Model Excludes", items: ["International expansion (Canada, EASA)", "Enterprise/Part 121 upmarket move", "M&A, fundraising, or exit multiple", "Revenue expansion from upsells"] },
                 { title: "Exit Potential", items: [`Revenue multiples: 4–8x ARR for vertical SaaS`, `Y10 Base ARR: ${fmt(y10.arr)}`, `Est. exit range: ${fmt(y10.arr * 4)} – ${fmt(y10.arr * 8)}`, "Strategic buyers: CAMP, Veryon, Garmin, Boeing"] },
               ].map(({ title, items }) => (
-                <div key={title} style={{ background: "#0d1117", border: "1px solid #1e293b", borderRadius: 10, padding: 16 }}>
+                <div key={title} style={{ background: "#0d1117", border: "1px solid #1e293b", borderRadius: 10, padding: isMobile ? 12 : 16 }}>
                   <div style={{ fontSize: 11, color: "#fbbf24", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>{title}</div>
                   {items.map(item => (
                     <div key={item} style={{ fontSize: 12, color: "#94a3b8", marginBottom: 6, paddingLeft: 10, borderLeft: "2px solid #1e293b" }}>{item}</div>

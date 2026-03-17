@@ -54,6 +54,16 @@ input[type=range] { height: 4px; border-radius: 2px; }
 .metric-default { border-color: rgba(51, 65, 85, 0.5); background: rgba(30, 41, 59, 0.4); }
 .metric-value { font-size: 1.5rem; font-weight: 900; }
 
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .metric-value { font-size: 1.25rem; }
+  .metric-card { padding: 0.75rem; }
+
+  input[type=range] { height: 6px; }
+
+  .recharts-legend-wrapper { font-size: 10px !important; }
+}
+
 /* Custom tooltip */
 .custom-tooltip {
   background: #0f172a;
